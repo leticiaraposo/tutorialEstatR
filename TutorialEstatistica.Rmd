@@ -1,0 +1,941 @@
+---
+title: "Aprendendo os códigos do R na prática"
+output: 
+  learnr::tutorial:
+    progressive: true
+    allow_skip: true
+    css: css/styles.css
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE, message=F, warning=F}
+library("learnr")
+library("gradethis")
+
+tutorial_options(exercise.timelimit = 60, exercise.checker = gradethis::grade_learnr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, echo==FALSE, message=F, warning=F}
+pkgTest <- function(x)
+{
+  if (!require(x, character.only = TRUE))
+  {
+    install.packages(x, dep = TRUE)
+    if (!require(x, character.only = TRUE))
+      stop("Package not found")
+  }
+}
+
+pkgTest("learnr")
+pkgTest("gradethis")
+pkgTest("summarytools")
+pkgTest("nycflights13")
+pkgTest("emo")
+pkgTest("sortable")
+pkgTest("here")
+```
+
+## Bem-vindo(a) {data-progressive=TRUE}
+
+Olá, este tutorial foi preparado para você colocar a mão na massa e aprender de uma maneira fácil e divertida a explorar as principais potencialidades do R.
+
+Vamos ver aqui os principais conteúdos ensinados em um curso de estatística, como leitura de dados, análise exploratória, testes de hipóteses... Ao longo do tutorial, perguntas e exercícios aparecerão para você praticar o que aprender. 
+
+<span style="color: #75aadb; font-size:14pt;font-style:italic;font-weight:bold;">
+Então chega de conversa e vamos nos aventurar!</span>
+
+## Mensagem Inicial {data-progressive=TRUE}
+
+Oi de novo! Antes de iniciarmos o tutorial, vamos deixar instalados alguns pacotes fundamentais para executarmos todas as etapas detalhadas aqui?
+
+Tá, já sei! Não expliquei o que é pacote, não é mesmo?
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*Pacotes, também chamados de bibliotecas, são conjuntos de códigos, dados, documentações e testes que visam realizar funções específicas dentro do R. Basicamente, todas as funções que iremos utilizar no R são provenientes de diferentes pacotes.*
+</p>
+
+Para instalar um pacote, a funcão utilizada é a [`install.packages()`](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/install.packages). Basta colocar o nome do pacote dentro da função usando aspas. Por exemplo, `install.packages("carData")`.
+
+Para este tutorial, vamos precisar dos seguintes pacotes: 
+
+* `carData`
+* `nycflghts13`
+* `dlookr`
+* `summarytools`
+
+Vai lá! Abra o seu RStudio e instale os pacotes! Ficarei aqui te esperando!
+
+Agora que você já os instalou, vamos começar?!
+
+## Diretório {data-progressive=TRUE}
+
+Sempre que vamos iniciar um trabalho, é recomendado criarmos uma pasta em algum local do nosso computador para que os arquivos relacionados sejam armazenados. Trabalhar no R funciona da mesma forma. Esse local é o que chamamos de diretório. 
+
+O R sempre inicia com um diretório definido. Para saber se o diretório corresponde à pasta na qual você deseja armazenar seu trabalho, utilize a função [`getwd()`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/getwd). Ela informa o caminho completo do diretório atual. 
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Sabendo disso, vamos verificar qual o diretório atual? Utilize o espaço abaixo digitando a função recém aprendida. Para visualizar se a resposta está correta, clique no botão `Submit Answer`.
+
+```{r dir, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Diretório", message=F, warning=F}
+
+```
+
+```{r dir-solution, message=F, warning=F}
+getwd()
+```
+
+```{r dir-check, message=F, warning=F}
+grade_code("Bom trabalho!", "Ah, que pena! Tente novamente!")
+```
+
+Agora que você já sabe ver o diretório atual, que tal o modificarmos colocando o caminho da nossa pasta de trabalho? 
+Vá até a sua pasta de interesse. Em seguida, basta clicar na janela da mesma forma como é feito no exemplo abaixo. O computador irá fornecer o caminho da pasta.
+
+```{r, out.width = "100%", fig.asp= 0.25}
+library(png)
+library(grid)
+img <- readPNG("images/diretorio.png")
+grid.raster(img)
+```
+
+Infelizmente, o R só aceita as barras nos seguintes formatos: `\\` ou `/`. A decisão é sua! Mude a direção da barra ou acrescente mais uma em cada parte do caminho.
+No meu caso, o caminho ficou: `C:\\Users\\Leticia\\Google Drive\\UNIRIO\\Disciplinas Ministradas\\2019.2\\Biologia - Biomedicina`
+
+Agora que temos o caminho da pasta que desejamos tornar o diretório, iremos utilizar a função [`setwd()`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/getwd). 
+O caminho é colocado dentro da função usando aspas no início e no final.
+No código abaixo está a mudança para o meu diretório. 
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Aproveite o código e mude agora o seu diretório para a pasta desejada. Basta substituir o caminho abaixo. Feito isso, clique no botão `Run Code`. Se não aparecer nenhuma mensagem de erro, a mudança foi realizada com sucesso. <i class="fas fa-thumbs-up"></i>
+
+```{r dir1, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Diretório", message=F, warning=F}
+setwd("C:\\Users\\Leticia\\Google Drive\\UNIRIO\\Disciplinas Ministradas\\2019.2\\Biologia - Biomedicina") 
+```
+
+```{r dir1-hint, message=F, warning=F}
+"Não se esqueça de arrumar as barras!"
+```
+
+## Leitura dos dados  {data-progressive=TRUE}
+
+Muito bem! Agora que você já sabe ver o diretório atual do R e modificá-lo para o caminho desejado, vamos ver como ler os dados que desejamos trabalhar?
+
+Os dados podem apresentar diversas origens. Eles podem ser obtidos de pacotes do R ou serem lidos a partir de arquivos externos, como .txt, .csv, .xls, .xlxs, dentre outros.
+
+### Dados de Pacotes
+
+Para ler um conjunto de dados de um pacote específico, primeiro precisamos saber se esse pacote já está instalado e carregado. Como você já instalou todos os pacotes necessários para este tutorial, fique tranquilo. Mas na vida real você sempre precisa verificar isso antes.
+
+Se o pacote já foi instalado previamente, é necessário usar apenas a função [`library()`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/library) ou `require()` com o nome do pacote dentro da função. 
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Dica</span>: normalmente, quando o pacote já está instalado, ao digitar o seu nome dentro da função `library()` ou `require()`, aparece o nome completo do pacote.
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Vamos, então, ler os dados `TitanicSurvival` presentes no pacote [`carData`](https://www.rdocumentation.org/packages/carData/versions/3.0-3).
+
+Primeiro, verifique se o pacote `carData` já se encontra instalado no presente computador. Se aparecer alguma mensagem de erro, instale primeiramente o pacote (por meio do RStudio e não por aqui!) e depois carregue-o com a função `library()` ou `require()`.
+Na linha debaixo, basta digitar o nome do banco `TitanicSurvival` e clicar em `Run Code`. Se tudo funcionar bem, aparecerá o banco de dados.
+
+```{r car, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Pacote", message=F, warning=F}
+
+```
+
+```{r car-solution, message=F, warning=F}
+library(carData)
+```
+
+```{r car-hint-1, message=F, warning=F}
+"Para instalar o pacote, use install.packages(). Não se esqueça de colocar aspas no início e final do nome do pacote."
+```
+
+```{r car-hint-2, message=F, warning=F}
+"Tanto faz usar library() ou require() para carregar um pacote."
+```
+
+### Dados de Arquivos Externos
+
+E se você tiver um conjunto de dados de um arquivo externo? Como proceder?
+Bom, aí precisamos saber algumas informações importantes sobre esse arquivo.
+
+Os tipos de arquivos mais comuns possuem as seguintes extensões: .txt, .csv, .xls e .xlxs.
+Para cada tipo de arquivo vamos usar uma função do R diferente.
+
+* Arquivos .txt - [`read.table()`](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table);
+* Arquivos .csv - [`read.csv()`](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/read.table);
+* Arquivos .xls ou .xlxs - [`read_excel()`](https://www.rdocumentation.org/packages/readxl/versions/1.3.1/topics/read_excel) do pacote `readxl`.
+
+Se o arquivo possuir na primeira linha o nome das variáveis, devemos utilizar o argumento `header = T` dentro das funções `read.table()` e `read.csv()`. Dependendo do separador das colunas, é bom informar dentro dessas mesmas duas funções o tipo deste separador: se for vígula, use `sep = ","`, se for ponto e vírgula, use `sep = ";"`.
+
+Por exemplo:
+
+`dados <- read.csv("C:\\Users\\Leticia\\Google Drive\\UNIRIO\\Disciplinas Ministradas\\2019.2\\Biologia - Biomedicina\\dados.csv", header = T, sep = ";")`
+
+Se o arquivo a ser lido está no diretório atual do R, o caminho não precisa ser escrito, apenas o nome do arquivo e a extensão, por exemplo:
+
+`dados <- read.csv("dados.csv", header = T, sep = ";")`
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Atenção</span>: no caso da função `read_excel`, é necessário colocar todo o caminho.
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+<i class="fas fa-exclamation"></i> **Importante!** O símbolo `<-` no R significa *atribuir*. Quando usamos essa estrutura significa que estamos atribuindo algo a um objeto do R. Neste caso, estamos criando o objeto `dados`, que será um `data.frame` contendo os dados do arquivo lido.
+</p>
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+```{r quiz1, message=F, warning=F}
+question("Qual função e pacote podemos utilizar para carregar os dados contidos em um arquivo .xls/.xlxs?",
+    answer("read.table(), readxl", message = "Tem certeza?"),
+    answer("read.csv(), utils", message = "Tem certeza?"),
+    answer("read_excel(), readxl", correct = TRUE),
+    answer("write.table(), utils", message = "Tem certeza?"),
+    incorrect = "Incorreto. Veja [aqui](https://www.rdocumentation.org/packages/readxl/versions/0.1.1/topics/read_excel).",
+    post_message = "Não se esqueça da função! Ela provavelmente será muito útil para a leitura dos seus dados.",
+    allow_retry = TRUE,
+    submit_button = "Enviar",
+    try_again_button = "Tente novamente",
+    correct = "Correto! Mandou bem!")
+```
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+O banco de dados `sleep.csv` mostra o efeito de dois medicamentos soporíficos (aumento de horas de sono em comparação ao controle) em 10 pacientes. Escreva como seria a leitura do banco `sleep.csv` que se encontra no diretório `https://vincentarelbundock.github.io/Rdatasets/csv/datasets/`, com separador vírgula e primeira linha do banco com os nomes das variáveis. Atribua a esse banco o nome **sleep**. Em seguida, chame o banco.
+
+```{r ex2, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Exercício", message=F, warning=F}
+
+```
+
+```{r ex2-solution, message=F, warning=F}
+sleep <- read.csv("https://vincentarelbundock.github.io/Rdatasets/csv/datasets/sleep.csv", header = T, sep = ",")
+sleep
+```
+
+```{r ex2-check, message=F, warning=F}
+grade_code("Bom trabalho!", "Ahh! :(")
+```
+
+```{r ex2-hint-1, message=F, warning=F}
+"O argumento `header` indica se há cabeçalho no banco de dados."
+```
+
+```{r ex2-hint-2, message=F, warning=F}
+"Para indicar o tipo de separador, use o argumento sep."
+```
+
+```{r ex2-hint, message=F, warning=F}
+"Sempre forneça um nome para o conjunto de dados que está sendo lido!"
+```
+
+### Estrutura dos Dados e Tipos de Variáveis
+
+Vou te dar uma dica bem valiosa, tá?
+Todas as vezes que você ler um banco de dados, use a função [`str`](https://www.rdocumentation.org/packages/utils/versions/3.6.2/topics/str) para acessar a estrutura dos dados. Ela vai te informar quantas linhas e colunas o banco tem, quais variáveis estão presentes, como elas estão codificadas e ainda mostra os valores das primeiras linhas. Vamos testá-la no banco `sleep`?
+
+```{r, message=F, warning=F}
+str(sleep)
+```
+
+Podemos observar que este banco possui 20 observações (linhas) e 3 variáveis (colunas). As três variáveis são `extra`, `group` e `ID`. Ao lado dela, podemos observar as expressões *num*, *Factor* e *Factor*, respectivamente. Essas palavrinhas representam o **tipo de variável**. 
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Relembrando...
+</span> 
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*<strong>Variáveis qualitativas</strong>: representam características de um indivíduo, objeto ou elemento que não podem ser medidas ou quantificadas. As respostas são dadas em categorias. Em relação à escala de mensuração, as variáveis qualitativas podem ser classificadas em: (i) <strong>nominal</strong>, quando não há qualquer relação de grandeza ou ordem entre as categorias, e (ii) <strong>ordinal</strong>, quando há algum tipo de ordem para as diferentes categorias na escala, mas não há intervalos iguais entre pontos adjacentes na escala. Se a variável qualitativa apresentar duas categorias, ela é classificada como <strong>binária</strong> ou <strong>dicotômica</strong>.* 
+</p>
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*<strong>Variáveis quantitativas</strong>: representam características de um indivíduo, objeto ou elemento resultantes de uma contagem (conjunto finito de valores) ou de uma mensuração (conjunto infinito de valores). São, em geral, mais informativas do que as qualitativas. Em relação à escala de mensuração, as variáveis quantitativas podem ser classificadas em: (i) <strong>intervalar</strong>, quando há ordem entre as unidades quanto à característica mensurada e a diferença entre pontos adjacentes é igual, mas não tem um ponto zero (origem), e (ii) <strong>razão</strong>, ordena as unidades quanto à característica mensurada, possui uma unidade de medida constante, a origem é única e o valor zero expressa a ausência de quantidade, e é possível calcular a razão. Elas podem ainda ser classificadas em <strong>discretas</strong>, se os valores são necessariamente números inteiros, ou <strong>contínuas</strong>, quando podem assumir qualquer valor dentro de um intervalo e, portanto, podem ser expressas como decimais.*
+</p>
+
+O R não irá usar exatamente essas classificações, como vimos ali em cima <i class="fas fa-hand-point-up"></i>. 
+Para variáveis nominais, ele usará as expressões *chr*, de *character*, ou *Factor*. Para variáveis ordinais será *Ord.factor*. Para as variáveis quantitativas, *num*, de *numeric*, quando for um número decimal ou *int* de *interger*, para valores inteiros. 
+Há também as classes *logical*, quando os valores são verdadeiro (TRUE) ou falso (FALSE) e *complex*, quando o número é complexo.
+
+Veja alguns exemplos:
+
+* character: `"a"`, `"kyz"`
+* factor: `"azul"`, `"rosa"`, `"verde"`
+* ordinal factor: `"1 classe"`, `"2 classe"`, `"3 classe"`
+* numeric: `1`, `23.7`
+* integer: `1`, `2`, `3`
+* logical: `TRUE`, `FALSE`
+* complex: `1+6i`
+
+Você também pode acessar essas informações com a função [`class()`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/class).
+
+```{r, warning=F, message=F}
+class("xyz")
+
+class(sleep$group)
+```
+
+Você reparou na informação nova no código acima? 
+Vou dar um tempinho para você perceber... 
+
+Isso mesmo! Todas as vezes que quisermos acessar uma variável do banco de dados, podemos utilizar a estrutura `nome_dos_dados$nome_da_variável`. Você perceberá que após escrever o nome do conjunto de dados e, logo em seguida, o `$`, já irá aparecer uma lista das variáveis presentes no atual banco.
+Simples assim! <i class="fas fa-grin-wink"></i>
+
+Se quiser verificar essa informação que eu acabei de te dar, aproveite o espaço abaixo:
+
+```{r testevar, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Aproveite o espaço", message=F, warning=F}
+
+```
+
+Como você já sabe, em um banco de dados, as variáveis são representadas nas colunas enquanto as observações são representadas nas linhas. No R, sempre que quisermos nos referir a um elemento específico de um banco de dados, vamos utilizar o nome do banco acompanhado de colchetes []. Por exemplo, vamos acessar o elemento da linha 3 e coluna 2 do banco `sleep`.
+
+```{r, message=F, warning=F}
+sleep[3,2]
+```
+
+Percebeu o "pulo do gato"? 
+
+Todas as vezes que vamos nos referir à linha, usamos o espaço antes da vírgula dentro do colchete. Quando queremos acessar a coluna, usamos o espaço após a vírgula.
+Então, resumindo:
+
+`nome_dos_dados[linha,coluna]`
+
+Se quiséssemos acessar todas as linhas, mas só a primeira coluna, por exemplo, usaríamos `nome_dos_dados[,1]`. Ou seja, deixamos vazio o local destinado às linhas. Sabendo disso...
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Como poderíamos acessar todas as colunas da quinta linha do banco de dados `sleep`?
+
+```{r ex3, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Exercício", message=F, warning=F}
+
+```
+
+```{r ex3-solution, message=F, warning=F}
+sleep[5,]
+```
+
+```{r ex3-check, message=F, warning=F}
+grade_code("Bem fáci, não é mesmo?", "Ahh! :( Tente novamente!")
+```
+
+Antes de passar para a próxima etapa, vamos ver se o conteúdo sobre variáveis foi assimilado?
+
+```{r var, message=F, warning=F, echo=F}
+vars <- c(
+    "Disciplina favorita (Estatística, Cálculo, Física)",
+    "Frequência com que você completa sua lição de casa (nunca, às vezes, sempre)",
+    "Número de refeições consumidos em um dia",
+    "Idade do aluno"
+  )
+
+question_rank(
+  "Coloque as variáveis na seguinte ordem: (i) variável qualitativa nominal, (ii) variável qualitativa ordinal, (iii) variável quantitativa discreta e (iv) variável quantitativa contínua:",
+  answer(vars, correct = TRUE),
+  answer(rev(vars), correct = FALSE, message = "Oh-oh! Outra direção!"),
+  allow_retry = TRUE,
+  options = sortable_options(
+    animation = 150
+  )
+)
+```
+
+## Pré-processamento dos dados  {data-progressive=TRUE}
+
+Agora que você já saber ler seus dados no R, antes de começarmos a análise exploratória, precisamos avaliar como estão os dados. É muito comum termos variáveis com dados ausentes, variáveis codificadas de maneira errada, algumas colunas não apresentarem importância para o estudo (nome, por exemplo) e precisarem ser excluídas, entre outros problemas. 
+
+Para solucionar esses tipos de problemas em nossos dados, vamos aprender por meio do conjunto de dados `flights` do pacote [`nycflights13`](https://www.rdocumentation.org/packages/nycflights13/versions/1.0.1).
+Antes de dar continuidade ao tutorial, certifique-se de que o pacote já está instalado no seu computador. Se não, instale-o antes de continuar.
+
+Para facilitar, vamos utilizar o pacote [`dlookr`](https://www.rdocumentation.org/packages/dlookr/versions/0.3.13). Esse provavelmente não está instalado em seu computador. Então, faça isso antes de continuar.
+
+O pacote `dlookr` apresenta a função [`diagnose()`](https://www.rdocumentation.org/packages/dlookr/versions/0.3.13/topics/diagnose) que fará um diagnóstico inicial.
+Vamos então avaliar o banco `flights` com essa função. Clique em `Run Code`. 
+
+```{r diag, exercise=TRUE, exercise.timelimit = 60, message=F, warning=F, message=F, warning=F}
+library(nycflights13)
+library(dlookr)
+diagnose(flights)
+```
+
+A função apresenta para nós seis informações:
+
+* *variables*: nome das variáveis;
+* *types*: tipo da variável, se numérica, inteiro, fator, caracter...
+* *missing_count*: número de dados ausentes (NAs) na variável;
+* *missing_percent*: porcentagem de NAs na variável;
+* *unique_count*: quantos valores diferentes a variável apresenta;
+* *unique_rate*: taxa de valores únicos (número de valores diferentes / número de observações).
+
+Podemos observar que a variável `year` apresenta apenas um valor, logo esta variável poderia ser excluída do nosso banco, pois não traz informação adicional.
+
+### Excluindo uma variável
+
+E como fazer isso? *Como excluir uma variável*?
+
+Para isso, basta utilizarmos o comando `NULL`. Se atribuírmos este comando à variável que desejamos excluir, ela será eliminada do nosso banco.
+
+Vamos, então, excluir a variável `year`. O comando já está na janela abaixo. Clique em `Run Button` para eliminarmos a variável.
+
+```{r diag2, exercise=TRUE, exercise.timelimit = 60, message=F, warning=F, message=F, warning=F}
+flights$year <- NULL
+```
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Vamos imaginar que a variável `time_hour` não seja do nosso interesse neste momento. Exclua-a do banco `flights`. 
+
+```{r ex4, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Exercício", message=F, warning=F}
+
+```
+
+```{r ex4-solution, message=F, warning=F}
+flights$time_hour <- NULL
+```
+
+```{r ex4-check, message=F, warning=F}
+grade_code("Mandou bem!", "Não desanime, ok?")
+```
+
+```{r ex4-hint-1, message=F, warning=F}
+"Lembra do NULL?"
+```
+
+### Conversão de Variáveis 
+
+Agora que você já sabe como excluir manualmente variáveis do seu banco de dados, imagine a seguinte situação: uma variável qualitativa foi codificada por meio de números, sendo que cada um deles representa uma categoria. 
+
+O banco de dados, ao ser lido no R, lerá esta variável como numérica.
+Você, muito esperto <i class="far fa-smile-wink"></i>, sabe que não poderá trabalhar com a variável desta forma. Logo, precisamos *convertê-la de quantitativa para qualitativa*.
+
+Vejamos o exemplo abaixo: 
+A variável `case` indica se a observação é um caso ou controle de infertilidade após aborto espontâneo e induzido. Veja mais detalhes [aqui](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/infert.html).
+Ao olhar o resultado apresentado pela função `str`, vemos que `case` está codificada como numérica, pois recebeu valor 0 para controle e valor 1 para caso.
+
+
+```{r, message=F, warning=F, message=F, warning=F}
+data("infert")
+str(infert)
+```
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Vamos então modificar essa variável para qualitativa. Para isso, usaremos a função [`as.factor`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/factor).
+Preencha o código abaixo com a função `as.factor` e veja a modificação que o R fará. Não se esqueça de pedir para ver a estrutura (`str`) dos dados.
+
+
+```{r ex5, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Exercício", message=F, warning=F}
+infert$case <- ________(infert$case)
+```
+
+```{r ex5-solution, message=F, warning=F}
+infert$case <- as.factor(infert$case)
+str(infert)
+```
+
+```{r ex5-check, message=F, warning=F}
+grade_code("Isso aí!!!", "Na próxima tenho certeza de que você irá mandar bem!")
+```
+
+```{r ex5-hint-1, message=F, warning=F}
+"Utilize str(infert) para verificar se a variável case está como qualitativa agora."
+```
+
+Se tivéssemos várias colunas (p. ex: var1, var2, var3) com este mesmo problema, poderíamos atribuir a um objeto (vamos chamar de `vars` neste caso) o nome de todas as colunas que desejamos transformar e, logo em seguida, aplicar um comando (usando a função [`lapply`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/lapply)) que fará todas as modificações ao mesmo tempo.
+
+`vars <- ("var1", "var2", "var3")`
+`nome_dos_dados[,vars] <- lapply(nome_dos_dados[,vars] , factor)`
+
+### Dados Ausentes
+
+Ok! Já sabemos excluir colunas do nosso banco de dados e converter uma variável codificada como quantitativa em qualitativa. Mas e se aparecerem *dados ausentes*, os famosos `NAs`?
+Elementar, meu caro Watson <i class="fas fa-search"></i>, a função [`complete.cases()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/complete.cases) indica quais linhas possuem valores para todas as colunas, ou seja, quais observações estão com as informações completas para todas as variáveis. Sabendo quais são essas linhas, basta filtrar o banco indicando o resultado e salvar este resultado em um novo objeto.
+
+Por exemplo, vamos supor que o nosso banco de dados possui o nome `dados`. Então:
+
+`dados2 <- dados[complete.cases(dados), ]`
+
+Como você já está craque em R, a tarefa é toda sua! Gere um novo banco a partir dos dados `flights` apenas com os dados completos. Salve estes dados em um objeto chamado `flights_completo`.
+
+```{r ex6, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Exercício", message=F, warning=F}
+
+```
+
+```{r ex6-solution, message=F, warning=F}
+flights_completo <- flights[complete.cases(flights),]
+```
+
+```{r ex6-check, message=F, warning=F}
+grade_code("Você é 10!", "Não desanime!")
+```
+
+```{r ex6-hint-1, message=F, warning=F}
+"Não pensou em nada como isso: flights_completo <- flights[complete.cases(flights),] ?"
+```
+
+## Análise Descritiva Univariada {data-progressive=TRUE}
+
+É isso aí! Já podemos começar a explorar os nossos dados e observar o que eles nos dizem sobre o universo em estudo. Esta etapa será muito importante para resumir a informação dos dados e definir a sua relevância. Vamos lá!
+
+Para começar, vamos aprender como criar gráficos e tabelas simples com o R, utilizando o banco de dados `flights` presente no pacote `nycflihts13`. 
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Relembrando...
+</span> 
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*É importante que as variáveis estejam codificadas corretamente. Pois, como já aprendemos, existem formas diferentes de trabalhar variáveis quantitativas e qualitativas* 
+</p>
+
+### Variáveis Qualitativas
+
+#### Tabelas
+
+Que tal começarmos aprendendo como fazer uma tabela de frequências? 
+
+Nós precisaremos da função `freq` do pacote `summarytools`. Basta atribuir a função `freq` a uma variável do banco `flights`. Mas antes o pacote precisa ser carregado, ok?
+
+Que tal tentar a variável `carrier`? Esta variável informa as abreviaturas em duas letras das transportadoras.
+
+```{r freq, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Tabela de Frequência", message=F, warning=F}
+
+```
+
+```{r freq-solution, message=F, warning=F}
+library(summarytools)
+freq(flights$carrier)
+```
+
+```{r freq-check, message=F, warning=F}
+grade_code("Bom trabalho!", "Algo de errado não está certo!")
+```
+
+A tabela apresenta cinco colunas:
+
+* *Freq*: frequência absoluta
+* *% Valid*: frequência relativa (%) dos casos válidos 
+* *% Valid Cum.*: frequência relativa acumulada (%) dos casos válidos    
+* *% Total*: frequência relativa (%) dos casos totais (incluindo NA, se tiver)  
+* *% Total Cum.*: frequência relativa acumulada (%) dos casos totais (incluindo NA, se tiver) 
+Se quiser saber como mudar alguns detalhes da tabela, digite *?freq* a janela abaixo. 
+
+```{r ajuda, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Ajuda", message=F, warning=F}
+
+```
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Relembrando...
+</span> 
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*A tabela de frequências também pode ser usada para variáveis quantitativas desde que, quando a variável for do tipo discreta, não haja uma grande quantidade de valores diferentes. Quando for do tipo contínua, os dados precisam estar agrupados em intervalos de classes pré estabelecidos.* 
+</p>
+
+#### Gráficos
+
+Agora que já sabemos montar uma tabela de frequências, que tal experimentar alguns gráficos? Os gráficos oferecem uma interpretação mais rápida dos dados. Você vai perceber!
+
+Como estamos explorando variáveis qualitativas, nós iremos trabalhar com o *Gráfico de Barras* e o *Gráfico de Setores* (ou Gráfico de Pizza para os mais gulosos).
+
+Nosso melhor amigo será o pacote [`ggplot2`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0). Ele permite construirmos gráficos incríveis. 
+O `ggplot2`, pacote desenvolvido por Hadley Wickham, foi baseado na gramática dos gráficos, de Wilkinson, 2005. Ele coloca uma estrutura organizada em torno das várias partes de um gráfico.
+
+Primeiro, você precisa dizer ao ggplot qual conjunto de dados usar. Isso é feito usando a função ggplot(df), em que df é um conjunto de dados que contém todos os recursos necessários para fazer o gráfico. Este é o passo mais básico. 
+Ah, mas antes de tudo, precisamos instalar o pacote `ggplot2`. Se você já tem ele instalado aí no seu computador, basta carregá-lo.
+Usando o conjunto de dados `flights`, clica aí em `Run Code` e veja o resultado!
+
+```{r ggplot1, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "ggplot", message=F, warning=F}
+library(ggplot2)
+ggplot(flights)
+```
+
+Ué?! Mas só apareceu uma tela cinza. Está certo isso?
+Sim! Nesta etapa, só informamos qual conjunto de dados queremos utilizar. Não fique ansioso, chegaremos lá!
+
+Opcionalmente, você pode adicionar qualquer estética que deseja aplicar ao seu ggplot (argumento interno do [`aes()`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/aes)) - como os eixos X e Y, especificando as respectivas variáveis do conjunto de dados. A variável usada para definir a cor, tamanho, forma e traçado também pode ser especificada aqui. A estética especificada será herdada por todas as camadas `geom` que você adicionará posteriormente. Você começará a perceber que conforme adicionamos informações, acrescentamos um sinal de mais (+). 
+
+Vamos incluir agora a variável `carrier` no argumento aes(x = -----). Não se esqueça de clicar em `Run Button`.
+
+```{r ggplot2, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "ggplot", message=F, warning=F}
+# Se apenas o eixo X for conhecido 
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier)
+```
+
+Agora já aparece o eixo X, certo?
+Mas queremos informar que o nosso primeiro gráfico desejado é o de barras. Para isso, vamos usar a camada `geom`. Como o gráfico é de barras, usamos [`geom_bar()`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/geom_bar).
+
+```{r ggplot3, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar()
+```
+
+Prontinho! Temos o nosso gráfico de barras! Bem fácil, certo?
+
+**Mas e se eu quisesse mudar a cor das barras?** 
+
+Vamos mudar para a cor azul? O R só entende palavras em inglês, por isso vamos usar a palavra *blue* (entre aspas, ok?).
+
+```{r ggplot4, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar(fill = "blue")
+```
+
+Basta inserirmos o argumento `fill` dentro da função `geom_bar`. Ou seja, informamos que queremos preencher as barras com a cor azul.
+
+Vamos ver se você aprendeu... Mude a cor das barras para uma que desejar. 
+Veja este [link](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) com várias cores lindas! Pegue o nome da cor que desejar e substitua a palavra *blue* do código acima. Clique em `Run Button` e veja a mágica! 
+
+```{r ggplot5, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+
+```
+
+**Dica:** Todos temos nossas cores favoritas, mas nem sempre elas são as melhores escolhas para um gráfico. Escolha cores com um bom contraste para facilitar a interpretação do conteúdo. 
+
+**E se eu quisesse as barras na horizontal?**
+Seus problemas acabaram! Basta inserir a função [`coord_flip()`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/coord_flip). Fácil, não é mesmo?
+
+```{r ggplot6, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar(fill = "blue") +
+  coord_flip()
+```
+
+O gráfico ficou lindo! Concorda? Mas se estamos preparando a imagem para algum material em português, precisamos melhorar esses eixos. Para isso, a função [`labs()`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/labs) facilita o nosso trabalho. Veja como fazer isso:
+
+```{r ggplot7, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar(fill = "blue") +
+  labs(x = "Transportadora", y = "Frequência Absoluta")
+```
+
+Bem simples! Basta adicionar as expressões entre aspas para cada argumento (x e y). Se quiséssemos atribuir um título, por exemplo, basta usarmos dentro da função `labs()` o argumento `title = ---`. Dá para adicionar diversos textos interessantes. Veja mais sobre isso neste [link](https://ggplot2.tidyverse.org/reference/labs.html).
+
+Já que você é o(a) mestre(a) dos gráficos, coloque o seguinte título no gráfico anterior: "Distribuição das Transportadoras".
+
+```{r ggplot8, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Barras", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar(fill = "blue") +
+  labs(x = "Transportadora", y = "Frequência Absoluta")
+```
+
+```{r ggplot8-solution, message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = carrier) +
+  geom_bar(fill = "blue") +
+  labs(x = "Transportadora", y = "Frequência Absoluta", title = "Distribuição das Transportadoras")
+```
+
+```{r ggplot8-check, message=F, warning=F}
+grade_code("Isso aí! Você já está craque!", "Algo de errado não está certo!")
+```
+
+Se você já sabe fazer um gráfico de barras, tenho certeza de que o gráfico de setores será bem fácil. 
+Para começar, a função que usaremos chama-se [`pie()`](https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/pie). Pizza, torta... tanto faz! Você não irá se esquecer mais deste gráfico! 
+Não basta informarmos apenas a variável que desejamos utilizar na construção do gráfico, mas também a quantidade presente em cada categoria. Isso nos obriga a usar a função [`table()`](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/table) muito utilizada para esta tarefa. Veja o que ela faz:
+
+```{r ggplot9, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Table", message=F, warning=F}
+table(flights$carrier)
+```
+
+Ela conta quantas observações existem em cada categoria. Muito parecida com a função `freq()`que já aprendemos, não é mesmo?!
+Pois bem, vamos usá-la dentro da função `pie()`.
+
+```{r ggplot10, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Setores", message=F, warning=F}
+pie(table(flights$carrier))
+```
+
+O gráfico de setores nem sempre é interessante. Como esta variável possui muitas categorias, várias delas estão sobrepostas no gráfico, dificultando a vizualização. Por isso, sempre que puder, dê preferência aos gráficos de barras. Combinados?
+
+### Análise Exploratória - Variáveis Quantitativas
+
+Variáveis qualitativas assimiladas, partiu falar das variáveis quantitativas?
+
+Na análise das variáveis quantitativas, vamos nos deparar, neste tutorial, com três tipos de gráficos diferentes, o histograma, o gráfico de densidades e o boxplot. 
+
+Vamos começar pelo histograma? Se você lembra da aula teórica de estatística, já sabe que o histograma é muito parecido com o gráfico de barras, a diferença principal no desenho é que os retângulos (ou barras) no histograma são justapostos.
+Dito isso, com certeza você já tem ideia de como fazeremos um histograma aqui. Basta pegarmos o código visto para o gráfico de barras e fazermos algumas adaptações.
+Neste caso, a função `aes()` vai receber como argumento x uma variável quantitativa e no lugar de `geom_bar()`, vamos usar [`geom_histogram()`](https://www.rdocumentation.org/packages/ggplot2/versions/0.9.0/topics/geom_histogram). Bora fazer o nosso primeiro histograma usando a variável `distance`, do pacote `flights`, que representa a distância, em milhas, entre aeroportos?
+
+```{r ggplot11, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Histograma", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = distance) +
+  geom_histogram()
+```
+
+Molezinha, concorda?
+
+Já que você está se tornando o especialista em `ggplot`, mostre-me a sua sagacidade e gere este mesmo histograma, mas com a cor "pink", com a legenda do eixo x igual a "Distância" e a legenda do eixo y igual a "Frequência Absoluta". Ahh, aproveite e acrescente o título "Distibuição da variável Distância".
+
+```{r ggplot12, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Histograma", message=F, warning=F}
+
+```
+
+```{r ggplot12-solution, message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = distance) +
+  geom_histogram(fill = "pink") +
+  labs(x = "Distância", y = "Frequência Absoluta", title = "Distibuição da variável Distância")
+```
+
+```{r ggplot12-check, message=F, warning=F}
+grade_code("Uau, você realmente está mandando super bem!", "Huum... não foi desta vez!")
+```
+
+Bem, visto tudo isso, tenho certeza de que você não irá me decepcionar e já faz ideia de como será feito o gráfico de densidades.
+
+Vou te dar um tempinho e um espaço para você tentar fazer o gráfico de densidades da variável `distance`:
+
+```{r ggplot13, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Densidades", message=F, warning=F}
+
+```
+
+Você deve ter tentado algo parecido com isso, não é mesmo?
+
+```{r ggplot14, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Gráfico de Densidades", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(x = distance) +
+  geom_density(fill = "lightyellow") +
+  labs(x = "Distância", y = "Densidade", title = "Densidade da variável Distância")
+```
+
+Pois bem, a função agora utilizada é a [`geom_density](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/geom_density). 
+Neste caso, preste muita atenção, pois o nosso eixo y não representa mais os valores de frequência, mas sim de densidade. 
+
+Ufa! Respire fundo e vamos para o nosso último gráfico da análise univariada. O queridinho de todos: o boxplot!
+
+Ok, ok, já sei que você já tem ideias para este gráfico usando a variável `distance`. Vai fundo, o espaço é todo seu!
+
+```{r ggplot15, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Boxplot", message=F, warning=F}
+
+```
+
+Segue a cola:
+
+```{r ggplot16, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Boxplot", message=F, warning=F}
+library(ggplot2)
+ggplot(flights) +
+  aes(y = distance) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(y = "Distância", title = "Boxplot da variável Distância")
+```
+
+A função agora é a [`geom_boxplot`](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0/topics/geom_boxplot). Se você quiser colocar o gráfico na vertical ou horizontal, basta colocar a variável no x ou y da função `aes`.
+
+### Medidas Resumo
+
+As medidas resumo são dados importantes que descrevem informações específicas de um grupo de valores. 
+
+No estudo das medidas resumo. a função de maior importância será a `descr` do pacote `summarytools`, que oferece um resumão de quase todas as medidas de uma variável quantitativa. 
+
+Essa função oferece para nós as seguintes informações:
+
+* *Mean:* média   
+* *Std.Dev:* desvio-padrão    
+* *Min:* valor mínimo   
+* *Q1:* 1o quartil     
+* *Median:* mediana    
+* *Q3:* 3o quartil    
+* *Max:* valor máximo    
+* *MAD:* desvio mmédio absoluto    
+* *IQR:* intervalo interquartílico
+* *CV:* coeficiente de variação (não está multiplicado por 100)
+* *Skewness:* assimetria    
+* *SE.Skewness:* erro padrão da assimetria    
+* *Kurtosis:* curtose     
+* *N.Valid:* número de observações válidas  
+* *Pct.Valid:* porcentagem de observações válidas`
+
+Que tal experimentar essa função e calcular as medidas resumo da variável `hour`do pacote `flights`?
+
+```{r descr, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Medidas resumo"}
+
+```
+
+```{r descr-solution}
+freq(flights$year)
+```
+
+```{r descr-check}
+grade_code("Bom trabalho!", "Algo de errado não está certo")
+```
+
+Você também sentiu falta de algo? Pois é, eu também. A função não nos dá a `Moda` nem os `Quantis` da variável. Teremos que calculá-los individualmente. E para isso precisaremos do pacote `DescTools`. Se ainda não o tem instalado, faça-o primeiro. 
+
+No cálculo da `Moda` utilizaremos a função `Mode`. 
+E no cálculo dos Quantis, a função `quantile`
+
+## Análise Descritiva Bivariada {data-progressive=TRUE}
+
+Agora que já sabemos como estudar uma variável no R, que tal trazer mais uma variável para essa festa? Dessa forma, podemos ver como duas variáveis se relacionam entre si.
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Relembrando...
+</span> 
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*Quando falamos da relação de duas variáveis qualitativas, estamos falando de uma <strong>associação</strong>. E quando falamos da relação duas quantitativas, estamos falando de uma <strong>correlação</strong>.* 
+</p>
+
+Nesse estudo, utilizaremos o banco de dados `titanic train` disponível através do pacote `titanic`. Lembre-se de instalá-lo caso ainda não o tenha, ou nosso navio não irá muito longe. 
+
+###Qualitatixa x Qualitativa
+
+Para quebrar o gelo, vamos começar construindo uma tabela de contingência de duas variáveis qualitativas. 
+
+A tabela de contingência fornece porcentagens que representam a quantidade em relação ao total de cada grupo. Essa porcentagem pode ser dada tanto em relação ao grupo das linhas, quanto pelo grupo das colunas. 
+
+Para construir a nossa tabela, vamos precisar da função `ctable` do pacote `summarytools` e atribuí-la à duas variáveis. Para especificar na função, adicionamos o comando `prop = “c”` para trabalhar o percentual com o grupo das colunas ou `prop = “r”` para trabalhar com os grupos das das linhas.
+Também podemos adicionar o comando `chisq = T` para calcular a estatística qui-quadrado das duas variáveis. 
+
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Relembrando...
+</span> 
+
+<p style="border:1px; border-style:solid; background-color: #ebf3fa; border-left: 6px solid red; border-color:#75aadb; padding: 1em;">
+*É por meio desta estatística que podemos avaliar o quanto estas variáveis estão associadas. Um valor baixo de qui-quadrado indica que as variáveis são independentes. * 
+</p>
+
+*Exemplo:* ctable(bancoSvariavelX, bancoSvariavelY, prop = "r")
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Por que não tentar criar uma tabela de contingência com perfil coluna e estatística qui-quadrado utilizando as variáveis `Sex` e `Survived`?
+
+```{r ctable, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Tabela Contingencia"}
+
+```
+
+```{r ctable-solution}
+ctable(titanic_train$Sex, titanic_train$Survived, prop ="c",chisq = T)
+```
+
+```{r ctable-check}
+grade_code("Gostei de ver!", "Melhor checar a função de novo")
+```
+
+*GRÁFICOS*
+
+
+###Quantitativa x Quantitativa
+No estudo de uma correlação, vamos investigar como duas variáveis quantitativas se comportam entre si.
+
+Nós podemos construir uma tabela de distribuição de frequências para as variáveis discretas e contínuas quando agrupadas em classes. Lembra da função `freq`?
+
+Mas vamos atentar o nosso estudo nas medidas de correlação. Elas são estatísticas que indicam se existe ou não uma relação entre as variáveis quantitativas, além do grau dessa relação (fraca, moderada ou forte) e do tipo de relação (positiva ou negativa).  
+
+O valor das medidas varia entre -1 e 1. O 0 indica a ausência de correlação, logo, um valor de coeficiente muito próximo de 0, indica uma correlação baixa. No mesmo sentido, os extremos indicam uma relação perfeita, e um valor próximo deles indica uma relação forte. 
+
+Já o tipo de relação depende do sinal do coeficiente. Quando o coeficiente é menor que 0, temos uma relação negativa, se maior que 0 a relação será positiva.
+
+As medidas de correlação podem ser obtidas pela função `cor()`. Nós trabalharemos ela com dois métodos, o do coeficiente linear de Pearson e o do coeficiente de postos de Spearman. Para calcular o coeficiente de Pearson, na função, acrescentamos o comando `method = c(“pearson”)`, e para calcular o de Spearman, o comando `method = c(“spearman”)`.  
+**Dica**: use o comando `use = "complete.obs"`para preencher observações vazias.
+
+*Exemplo*: cor(bancoSvariavelx, bancoSvariavely,  use = “complete.obs”, method = “spearman”
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Mão na massa. Calcule o coeficiente de correlação de Pearson das variáveis `Age` e `Fare` do pacote `titanic_train`.
+
+```{r cor, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Correlação"}
+
+```
+
+```{r cor-solution}
+cor(titanic_train$Age, titanic_train$Fare, use= "complete.obs", method = "pearson")
+```
+
+```{r cor-check}
+grade_code("Pearson estaria orgulhoso!", "Algo parece fora do lugar")
+```
+
+Com base no coeficiente obtido na resposta anterior, como podemos classificar a correlação das varíaveis Age e Fare?
+
+```{r cor2-a, echo=FALSE}
+question("Com base no coeficiente obtido na resposta anterior, como podemos classificar a correlação das varíaveis Age e Fare?",
+  answer("Forte correlação negativa"),
+  answer("Forte correlação positiva"),
+  answer("Fraca correlação positiva", correct = TRUE),
+  answer("Fraca correlação negativa")
+)
+```
+
+Mais à frente, estudaremos a diferença entre os dois e quando devemos aplicá-los numa hipótese. 
+
+### Quantitativa x Qualitativa
+
+Acredito que foi a grande filósofa Hanna Montana que uma vez disse “Você tem o melhor dos dois mundos”. Então vem comigo que vamos analisar como esses dois mundos se relacionam. 
+
+Através das funções `with` e `stby` vamos evidenciar a função `descr` para obter as medidas resumo de uma variável quantitativa para cada categoria de uma qualitativa. 
+
+*Exemplo:* with(banco, stby(variavelA, variavelB, descr).
+
+Viu como é menos complicado do que parece?
+
+<i class="fas fa-pen"></i>
+<span style="color: #75aadb; font-size:12pt;font-style:italic;font-weight:bold;">
+Hora de Praticar!
+</span>
+
+Agora, porque você não tenta com as varíaveis `Age` e `Sex` do pacote `titanic_train`?
+
+```{r with1, exercise=TRUE,  exercise.completion=TRUE, exercise.cap = "Medidas Resumo"}
+
+```
+
+```{r with1-solution}
+with(titanic_train, stby(Age, Sex, descr))
+```
+
+```{r with1-check}
+grade_code("Você realmente tem o melhor dos dois mundos", "Hm... Tem certeza?")
+```
+
+E não é que a Hanna estava certa? Queijo e goiabada são ainda melhores juntos. Mas como será que representamos essas variáveis em gráficos? 
+
+*Gráficos* 
